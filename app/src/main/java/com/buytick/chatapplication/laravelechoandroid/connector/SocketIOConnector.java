@@ -1,0 +1,164 @@
+/*
+ * SocketIOConnector.java
+ * MrBin99 © 2018
+ */
+package com.buytick.chatapplication.laravelechoandroid.connector;
+
+
+import com.buytick.chatapplication.laravelechoandroid.EchoCallback;
+import com.buytick.chatapplication.laravelechoandroid.EchoException;
+import com.buytick.chatapplication.laravelechoandroid.EchoOptions;
+import com.buytick.chatapplication.laravelechoandroid.channel.AbstractChannel;
+import com.buytick.chatapplication.laravelechoandroid.channel.SocketIOChannel;
+import com.buytick.chatapplication.laravelechoandroid.channel.SocketIOPresenceChannel;
+import com.buytick.chatapplication.laravelechoandroid.channel.SocketIOPrivateChannel;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
+
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * This class creates a connector to a Socket.io server.
+ */
+public class SocketIOConnector extends AbstractConnector {
+
+    /**
+     * The socket.
+     */
+    private Socket socket;
+
+    /**
+     * All of the subscribed channel names.
+     */
+    private Map<String, SocketIOChannel> channels;
+
+    /**
+     * Create a new Socket.IO connector.
+     *
+     * @param options options
+     */
+    public SocketIOConnector(EchoOptions options) {
+        super(options);
+
+        channels = new HashMap<>();
+    }
+
+    @Override
+    public void connect(EchoCallback success, EchoCallback error) {
+        try {
+            socket = IO.socket(this.options.host);
+            socket.connect();
+
+            if (success != null) {
+                socket.on(Socket.EVENT_CONNECT, success);
+            }
+
+            if (error != null) {
+                socket.on(Socket.EVENT_CONNECT_ERROR, error);
+            }
+        } catch (URISyntaxException e) {
+            if (error != null) {
+                error.call();
+            }
+        }
+    }
+
+    /**
+     * Listen for general event on the socket.
+     *
+     * @param eventName event name
+     * @param callback  callback
+     * @see io.socket.client.Socket list of event types to listen to
+     */
+    public void on(String eventName, EchoCallback callback) {
+        socket.on(eventName, callback);
+    }
+
+    /**
+     * Remove all listeners for a general event.
+     *
+     * @param eventName event name
+     */
+    public void off(String eventName) {
+        socket.off(eventName);
+    }
+
+    /**
+     * Listen for an event on a channel.
+     *
+     * @param channel  channel name
+     * @param event    event name
+     * @param callback callback
+     * @return the channel
+     */
+    public SocketIOChannel listen(String channel, String event, EchoCallback callback) {
+        return (SocketIOChannel) this.channel(channel).listen(event, callback);
+    }
+
+    @Override
+    public AbstractChannel channel(String channel) {
+        if (!channels.containsKey(channel)) {
+            channels.put(channel, new SocketIOChannel(socket, channel, options));
+        }
+        return channels.get(channel);
+    }
+
+    @Override
+    public AbstractChannel privateChannel(String channel) {
+        String name = "private-" + channel;
+
+        if (!channels.containsKey(name)) {
+            channels.put(name, new SocketIOPrivateChannel(socket, name, options));
+        }
+        return channels.get(name);
+    }
+
+    @Override
+    public AbstractChannel presenceChannel(String channel) {
+        String name = "presence-" + channel;
+
+        if (!channels.containsKey(name)) {
+            channels.put(name, new SocketIOPresenceChannel(socket, name, options));
+        }
+        return channels.get(name);
+    }
+
+    @Override
+    public void leave(String channel) {
+        String privateChannel = "private-" + channel;
+        String presenceChannel = "presence-" + channel;
+
+        for (String subscribed : channels.keySet()) {
+            if (subscribed.equals(channel) || subscribed.equals(privateChannel) || subscribed.equals(presenceChannel)) {
+                try {
+                    channels.get(subscribed).unsubscribe(null);
+                } catch (EchoException e) {
+                    e.printStackTrace();
+                }
+
+                channels.remove(subscribed);
+            }
+        }
+    }
+
+    @Override
+    public boolean isConnected() {
+        return socket.connected();
+    }
+
+    @Override
+    public void disconnect() {
+        for (String subscribed : channels.keySet()) {
+            try {
+                channels.get(subscribed).unsubscribe(null);
+            } catch (EchoException e) {
+                e.printStackTrace();
+            }
+        }
+
+        channels.clear();
+        socket.disconnect();
+    }
+}

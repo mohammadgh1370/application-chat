@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "134762902589",
+    "firebase_url": "https://zamangasht-1532386287361.firebaseio.com",
+    "project_id": "zamangasht-1532386287361",
+    "storage_bucket": "zamangasht-1532386287361.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:134762902589:android:4d973ce8611ae520",
+        "android_client_info": {
+          "package_name": "com.buytick.chatapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "134762902589-5p7t4skhoauu2tl3s0iqt1uhc6v1t9nd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjBjwkHjd2f04Kj4i3tRt7n5MXBUBsBKQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "134762902589-5p7t4skhoauu2tl3s0iqt1uhc6v1t9nd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
